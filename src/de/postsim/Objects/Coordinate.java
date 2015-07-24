@@ -7,18 +7,18 @@ package de.postsim.Objects;
  */
 public class Coordinate {
 	
-	private double x;							// x value or latitude
-	private double y;							// y value or longitude
+	private double lat;							// x value or latitude
+	private double lon;							// y value or longitude
 	private final double radius = 6378388;		// radius of the earth
 	
 	/**
 	 * Standard Constructor for a Coordinate. A point in 2-dimensional space with x (lat) and y-value (lon)
-	 * @param x the x-value
-	 * @param y the y-value
+	 * @param lat the x-value
+	 * @param lon the y-value
 	 */
-	public Coordinate(double x, double y){
-		setX(x);
-		setY(y);
+	public Coordinate(double lat, double lon){
+		setX(lat);
+		setY(lon);
 	}
 	
 	
@@ -29,9 +29,9 @@ public class Coordinate {
 	 */
 	public double getDistance(Coordinate target) {
 		Double result;
-		result = radius * Math.acos(Math.sin(Math.toRadians(this.x)) * Math.sin(Math.toRadians(target.getX())) 
-						+ Math.cos(Math.toRadians(this.x)) * Math.cos(Math.toRadians(target.getX())) 
-						* Math.cos(Math.toRadians(this.y) - Math.toRadians(target.getY())));
+		result = radius * Math.acos(Math.sin(Math.toRadians(this.lat)) * Math.sin(Math.toRadians(target.getX()))
+						+ Math.cos(Math.toRadians(this.lat)) * Math.cos(Math.toRadians(target.getX()))
+						* Math.cos(Math.toRadians(this.lon) - Math.toRadians(target.getY())));
 		
 		// if numbers get sufficiently close to each other or the coordinates are actually the same the result is NAN, when it should be 0 (or very close to it) 
 		if (result.isNaN()) {
@@ -44,25 +44,56 @@ public class Coordinate {
 	 * overrides java.lang.Object.toString
 	 */
 	public String toString() {
-		String s = "(" + getX() + " | " + getY() + ")";
+		String s = "(" + getLat() + " | " + getLon() + ")";
 		return s;
 	}
 	
 	// getters and setters
 	
-	public double getX() {
-		return x;
+	public double getLat() {
+		return lat;
 	}
 	
-	public void setX(double x) {
-		this.x = x;
+	public void setLat(double lat) {
+		this.lat = lat;
 	}
 	
-	public double getY() {
-		return y;
+	public double getLon() {
+		return lon;
 	}
 	
-	public void setY(double y) {
-		this.y = y;
+	public void setLon(double lon) {
+		this.lon = lon;
+	}
+
+    @Deprecated
+    public double getX() {
+        return lat;
+    }
+    @Deprecated
+    public void setX(double lat) {
+        this.lat = lat;
+    }
+    @Deprecated
+    public double getY() {
+        return lon;
+    }
+    @Deprecated
+    public void setY(double lon) {
+        this.lon = lon;
+    }
+
+    /**
+	 * Project this coordinate onto the given coordinate (into its direction) using the scalar to determine the length. I.e. scalar=.5 means "half the way".
+     * FIXME: verify coordinate math
+     * FIXME: handle wrap-around and negative coordinates
+     * @param b
+     * @param scalar
+	 */
+	public void project(Coordinate b, float scalar) {
+		Coordinate a = this;
+		a.lat = a.lat +  scalar*(b.lat -a.lat);
+		a.lon = a.lon +  scalar*(b.lon -a.lon);
+
 	}
 }

@@ -39,7 +39,7 @@ public class MapSimulation {
 	/**
 	 * empty constructor (except for a map) for testing purposes. Uses standard settings with 8 users and 25 pakets
 	 */
-	public MapSimulation(SimMap map, String csvfile {
+	public MapSimulation(SimMap map, String csvfile) {
 		this(map, 8, 25, csvfile);
 	}
 
@@ -49,7 +49,7 @@ public class MapSimulation {
 	 * @param numberofpakets
 	 */
 	public MapSimulation(SimMap map, int numberofusers, int numberofpakets, String csvfile) {
-		this(map, numberofusers, numberofpakets, this.bluetoothrange, this.movementalgorithm, csvfile);
+		this(map, numberofusers, numberofpakets, 10, RANDOM_WAYPOINT, 10, csvfile);
 	}
 	
 	
@@ -62,7 +62,10 @@ public class MapSimulation {
 	 * @param movementalgorithm 1 = RandomWayPoint; 2 = ClusterWayPoint
 	 * @param tradeDelay tradeDelay for Users in SimulationCycles
 	 */
-	public MapSimulation(SimMap map, int numberofusers, int numberofpakets, int bluetoothrange, int movementalgorithm, int tradeDelay, String filename) {
+	public MapSimulation(SimMap map,
+						 int numberofusers, int numberofpakets,
+						 int bluetoothrange, int movementalgorithm, int tradeDelay,
+						 String filename) {
 		setMap(map);
 		switch(movementalgorithm) {
 			case RANDOM_WAYPOINT:
@@ -88,8 +91,11 @@ public class MapSimulation {
 	}
 
 
-
-
+    /**
+     *
+     * @param numberofusers
+     * @param numberofpackets
+     */
 	private void initRandomWaypointSim(int numberofusers, int numberofpackets) {
 		for (int i = 0; i < numberofusers; i++) {
 			// create user with random starting location and random starting target
@@ -115,7 +121,12 @@ public class MapSimulation {
 
 	}
 
-	private void initClusterWaypointSim(int numberofusers, int numberofpakets) {
+	/**
+	 *
+	 * @param numberofusers
+	 * @param numberofpackets
+	 */
+	private void initClusterWaypointSim(int numberofusers, int numberofpackets) {
 		// initialize Clusters for the algorithm
 		initializeClusters();
 
@@ -133,7 +144,7 @@ public class MapSimulation {
 			u.addKnownclusters(u.getPath().get(u.getPath().size() - 1));
 			users.add(u);
 		}
-		for (int i = 0; i < numberofpakets; i++) {
+		for (int i = 0; i < numberofpackets; i++) {
 			// create pakets with starting location and destination on a random cluster weighed by the importance of the cluster
 			SimNode random = getRandomClusterNode();
 			SimNode random2 = getRandomClusterNode();
@@ -183,7 +194,7 @@ public class MapSimulation {
 	}
 	
 	/**
-	 * 
+	 *
 	 * @return
 	 */
 	private SimNode getRandomClusterNode() {
@@ -236,7 +247,7 @@ public class MapSimulation {
 	
 	
 	/**
-	 * checks if there are pakets without carriers to pick up in range of a user
+	 * checks if there are pakets without carriers to pick up in range of any user
 	 */
 	public void checkForCarrierlessPakets() {
 		// looking for pakets without carriers in range of the users
@@ -332,44 +343,53 @@ public class MapSimulation {
 	/**
 	 * checks through all Users for possible negotiations about pakets
 	 */
-	public void checkForNegotiations() {
-		// going through all users and for every user again through every other user to check all possible pairs
-		for (int i = 0; i < users.size(); i++) {
-			User u = users.get(i);
-			for (int i2 = 0; i2 < users.size(); i2++) {
-				User u2 = users.get(i2);
-				if (i != i2) {
-					// check if both users aren't currently blocked from trading
-					if (u.getPosition().getDistance(u2.getPosition()) < bluetoothrange && u.getTradestopcounter() < 1 && u2.getTradestopcounter() < 1) {
-						for (int i3 = 0; i3 < u.getPakets().size(); i3++) {
-							Paket p = u.getPakets().get(i3);
-							double anglecarrier = u.getAngle(p.getDestination());
-							double anglecarriee = u2.getAngle(p.getDestination());
-							if (anglecarriee < anglecarrier) {
-								u.increaseTradestopcounter(tradeDelay);
-								u2.increaseTradestopcounter(tradeDelay);
-								u.removePaket(p);
-								u2.addPaket(p);
-								p.setCarrier(u2);
-								p.setPosition(new Coordinate(u2.getPosition().getX(), u2.getPosition().getY()));
-								p.setHandovers(p.getHandovers() + 1);
+    public void checkForNegotiations() {
+        // going through all users and for every user again through every other user to check all possible pairs
+        for (int i = 0; i < users.size(); i++) {
+            User u = users.get(i);
+            for (int i2 = 0; i2 < users.size(); i2++) {
+                User u2 = users.get(i2);
+                if (i != i2) {
+                    // check if both users aren't currently blocked from trading
+                    if (u.getPosition().getDistance(u2.getPosition()) < bluetoothrange)
+                    {
+                        //Todo:
+                        graph.addMutualUserContact(u,u2, getCycles()*getSteptime());
+                        if(u.getTradestopcounter() < 1 && u2.getTradestopcounter() < 1)
+                            negotiate(u, u2);
+                    }
+                }
+            }
+        }
+    }
 
-								// logging
-								ArrayList<String[]> paketnegotiate = new ArrayList<String[]>();
-								String s1 = "User " + u.getUsernumber();
-								String s2 = "User " + u2.getUsernumber();
-								String s3 = "Paket " + p.getPaketnumber();
-								paketnegotiate.add(new String[] {String.valueOf(cycles), s1, s3, u.getPosition().toString(), "Paket negotiation succesful" });
-								paketnegotiate.add(new String[] {String.valueOf(cycles), s2, s3, u2.getPosition().toString(), "Paket negotiation succesful" });
-								logger.write(paketnegotiate);
-							}
-						}
-					}
-				}
-			}
-		}
-	}
-	
+    private void negotiate(User u, User u2) {
+        for (int i3 = 0; i3 < u.getPakets().size(); i3++)
+        {
+            Paket p = u.getPakets().get(i3);
+            double anglecarrier = u.getAngle(p.getDestination());
+            double anglecarriee = u2.getAngle(p.getDestination());
+            if (anglecarriee < anglecarrier) {
+                u.increaseTradestopcounter(tradeDelay);
+                u2.increaseTradestopcounter(tradeDelay);
+                u.removePaket(p);
+                u2.addPaket(p);
+                p.setCarrier(u2);
+                p.setPosition(new Coordinate(u2.getPosition().getX(), u2.getPosition().getY()));
+                p.setHandovers(p.getHandovers() + 1);
+
+                // logging
+                ArrayList<String[]> paketnegotiate = new ArrayList<String[]>();
+                String s1 = "User " + u.getUsernumber();
+                String s2 = "User " + u2.getUsernumber();
+                String s3 = "Paket " + p.getPaketnumber();
+                paketnegotiate.add(new String[] {String.valueOf(cycles), s1, s3, u.getPosition().toString(), "Paket negotiation succesful" });
+                paketnegotiate.add(new String[] {String.valueOf(cycles), s2, s3, u2.getPosition().toString(), "Paket negotiation succesful" });
+                logger.write(paketnegotiate);
+            }
+        }
+
+    }
 	
 	/**
 	 * moves the user a certain distance towards the target
