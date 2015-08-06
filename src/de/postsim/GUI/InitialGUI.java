@@ -3,11 +3,13 @@ package de.postsim.GUI;
 import java.awt.Dimension;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
+import java.io.IOException;
 
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 
-import de.postsim.IO.XMLParser;
+import de.postsim.IO.OSMXMLParser;
 import de.postsim.Objects.SimMap;
 import de.postsim.Simulation.MapSimulation;
 
@@ -28,14 +30,15 @@ public class InitialGUI
         if(returnvalue == JFileChooser.APPROVE_OPTION)
         {
         	// parsing the .osm file and building our own map with it
-        	XMLParser parser = new XMLParser(chooser.getSelectedFile());
+        	OSMXMLParser parser = new OSMXMLParser(chooser.getSelectedFile());
         	SimMap map = parser.parse();
         	
-        	// constructing a simulation with our chosen parameters
-        	String filename = chooser.getSelectedFile().getName();
-        	String name = filename.split("\\.")[0];
+        	File mapfile = chooser.getSelectedFile();
+        	String mapname = mapfile.getName().split("\\.")[0];
 
-        	MapSimulation sim = new MapSimulation(map, 100, 250, 10, MapSimulation.CLUSTER_WAYPOINT, 10, name);
+            // constructing a simulation with our chosen parameters
+        	MapSimulation sim = new MapSimulation(map, 100, 250, 10,
+                    MapSimulation.CLUSTER_WAYPOINT, 10, mapname);
         	
         	// building our MapGUI Applet
         	JFrame f = new JFrame("Map");
@@ -56,8 +59,8 @@ public class InitialGUI
 
             //main simulation Loop
             // start the simulation and update the GUI until we have not delivered all of our pakets
-            while (sim.getUnDeliveredpakets().size() > 0 && sim.getCycles() < 604800) {
-            	sim.simulate();
+            while (sim.getUnDeliveredpakets().size() > 0 && sim.getCycles() < 604){//800) {
+            	sim.simulation_step();
                 // uncomment this for live visuals
             /*  applet.repaint();
             	try {
@@ -68,6 +71,12 @@ public class InitialGUI
             }
             // write the final stats into our logging file
             sim.writeFinalStats();
+            try {
+                sim.writeContactGraph();
+            } catch (IOException e) {
+                // tell that writing failed
+                e.printStackTrace();
+            }
             // display a heatmap in the applet
             applet.setHeatmap(true);
             applet.repaint();

@@ -1,10 +1,7 @@
 package de.postsim.Objects;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 
 /**
  * Map on which we simulate our Users and Pakets. Stores Nodes and Ways.
@@ -20,8 +17,9 @@ public class SimMap {
 	private double bottomBound;
 	private double rightBound;
 	private double leftBound;
-	
-	
+	private static Random rand = new Random(4); // static random seed for reproducability
+
+
 	/**
 	 * construct our map out of the Ways we extracted from a OpenStreetMapFile
 	 * @param ways
@@ -90,10 +88,10 @@ public class SimMap {
 		// eliminate every node that is not within bounds of the map
 		for (int i = 0; i < nodes.size(); i++) {
 			SimNode node = nodes.get(i);
-			if (node.getPosition().getY() > leftBound &&
-				node.getPosition().getY() < rightBound &&
-				node.getPosition().getX() > bottomBound &&
-				node.getPosition().getX() < topBound) {
+			if (node.getPosition().getLon() > leftBound &&
+				node.getPosition().getLon() < rightBound &&
+				node.getPosition().getLat() > bottomBound &&
+				node.getPosition().getLat() < topBound) {
 				tempnodes.add(node);
 			}
 		}
@@ -237,8 +235,8 @@ public class SimMap {
 		SimNode result = null;
 		for (int i = 0; i < nodes.size(); i++) {
 			SimNode node = nodes.get(i);
-			if (node.getPosition().getX() == nodeposition.getX() && 
-				node.getPosition().getY() == nodeposition.getY()) {
+			if (node.getPosition().getLat() == nodeposition.getLat() &&
+				node.getPosition().getLon() == nodeposition.getLon()) {
 				result = node;
 			}
 		}
@@ -303,7 +301,8 @@ public class SimMap {
 	 * @return
 	 */
 	public static double RandomNumber(double lowerLimit, double upperLimit) {
-		return Math.random() * (upperLimit - lowerLimit) + lowerLimit;
+		return rand.nextDouble() * (upperLimit - lowerLimit) + lowerLimit;
+		//Math.random() * (upperLimit - lowerLimit) + lowerLimit;
 	}
 	
 	

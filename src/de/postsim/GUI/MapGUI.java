@@ -108,7 +108,7 @@ public class MapGUI extends JApplet {
 				float strokethickness = (float) (((meanvisited-minvisited)/(maxvisited-minvisited)*2) + 0.2);
 				g2.setStroke(new BasicStroke(strokethickness));
 
-				g2.draw(new Line2D.Double(a.getX(), a.getY(), b.getX(), b.getY()));
+				g2.draw(new Line2D.Double(a.getLat(), a.getLon(), b.getLat(), b.getLon()));
 			}
 		}
 
@@ -129,7 +129,7 @@ public class MapGUI extends JApplet {
 				SimNode node2 = nodes.get(i2 + 1);
 				Coordinate a = getGUIcoordinate(node1.getPosition());
 				Coordinate b = getGUIcoordinate(node2.getPosition());
-				g2.draw(new Line2D.Double(a.getX(), a.getY(), b.getX(), b.getY()));
+				g2.draw(new Line2D.Double(a.getLat(), a.getLon(), b.getLat(), b.getLon()));
 			}
 		}
 	}
@@ -141,7 +141,7 @@ public class MapGUI extends JApplet {
 		for (int i = 0; i < users.size(); i++) {
 			User user = users.get(i);
 			Coordinate a = getGUIcoordinate(user.getPosition());
-			g2.fill(new Ellipse2D.Double(a.getX() - 4, a.getY() - 4, 8, 8));
+			g2.fill(new Ellipse2D.Double(a.getLat() - 4, a.getLon() - 4, 8, 8));
 		}
 	}
 
@@ -153,7 +153,7 @@ public class MapGUI extends JApplet {
 		for (int i = 0; i < pakets.size(); i++) {
 			Paket paket = pakets.get(i);
 			Coordinate a = getGUIcoordinate(paket.getPosition());
-			g2.fill(new Rectangle2D.Double(a.getX() - 2, a.getY() - 2, 4, 4));
+			g2.fill(new Rectangle2D.Double(a.getLat() - 2, a.getLon() - 2, 4, 4));
 		}
 	}
 	private void paintMap(Graphics2D g2){
@@ -169,7 +169,7 @@ public class MapGUI extends JApplet {
 			for (int i = 0; i < smoothnodes.size(); i++) {
 				SimNode node = smoothnodes.get(i);
 				Coordinate a = getGUIcoordinate(node.getPosition());
-				g2.draw(new Ellipse2D.Double(a.getX() - 5, a.getY() - 5, 10, 10));
+				g2.draw(new Ellipse2D.Double(a.getLat() - 5, a.getLon() - 5, 10, 10));
 			}
 		}
 	}
@@ -192,8 +192,8 @@ public class MapGUI extends JApplet {
 			modifiedheight = height * map.getMapRatio();
 		}
 		// TODO fix projection for non quadratic maps
-		double x = (coord.getY() - map.getLeftBound()) * (modifiedwidth / (map.getRightBound() - map.getLeftBound()));
-		double y = (coord.getX() - map.getBottomBound()) * (modifiedheight / (map.getTopBound() - map.getBottomBound()));
+		double x = (coord.getLon() - map.getLeftBound()) * (modifiedwidth / (map.getRightBound() - map.getLeftBound()));
+		double y = (coord.getLat() - map.getBottomBound()) * (modifiedheight / (map.getTopBound() - map.getBottomBound()));
 		double z = y - (modifiedheight / 2);
 		y = (modifiedheight / 2) + (z * (-1));
 		Coordinate result = new Coordinate(x, y);

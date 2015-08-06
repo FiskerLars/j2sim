@@ -25,7 +25,7 @@ public class Paket {
 	 */
 	public Paket(Coordinate startPosition, Coordinate destination, int id) {
 		setPosition(startPosition);
-		setStartingposition(new Coordinate (startPosition.getX(), startPosition.getY()));
+		setStartingposition(new Coordinate (startPosition.getLat(), startPosition.getLon()));
 		setDestination(destination);
 		setPaketnumber(id);
 	}

@@ -1,11 +1,13 @@
 package de.postsim.Simulation;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.logging.Logger;
 
 import de.postsim.IO.CSVLogging;
-import de.postsim.IO.ContactGraph;
+import de.postsim.ContactGraph.ContactGraph;
 import de.postsim.Objects.Coordinate;
 import de.postsim.Objects.Paket;
 import de.postsim.Objects.SimMap;
@@ -19,6 +21,7 @@ import de.postsim.Objects.User;
  */
 public class MapSimulation {
 
+	private final String simID;
 	private SimMap map;
 	private ArrayList<User> users = new ArrayList<User>();							// list of users
 	private ArrayList<Paket> pakets = new ArrayList<Paket>();						// list of non-delivered pakets
@@ -32,9 +35,13 @@ public class MapSimulation {
 	private int movementalgorithm = RANDOM_WAYPOINT;								// movement algorithms
 	public static final int RANDOM_WAYPOINT = 1;
 	public static final int CLUSTER_WAYPOINT = 2;
-	private ArrayList<SimNode> clusternodes = new ArrayList<SimNode>();				// nodes that are cluster in the cluster_waypoint algorithm					
+	private ArrayList<SimNode> clusternodes = new ArrayList<SimNode>();
+					// nodes that are cluster in the cluster_waypoint algorithm
+	private String mapname;
 	private CSVLogging logger;														// logging object
 	private ContactGraph graph;
+
+	private static final Logger log = Logger.getLogger(MapSimulation.class.getName());
 	
 	/**
 	 * empty constructor (except for a map) for testing purposes. Uses standard settings with 8 users and 25 pakets
@@ -65,7 +72,9 @@ public class MapSimulation {
 	public MapSimulation(SimMap map,
 						 int numberofusers, int numberofpakets,
 						 int bluetoothrange, int movementalgorithm, int tradeDelay,
-						 String filename) {
+						 String mapname) {
+	this.mapname = mapname;
+
 		setMap(map);
 		switch(movementalgorithm) {
 			case RANDOM_WAYPOINT:
@@ -87,7 +96,9 @@ public class MapSimulation {
 		Calendar cal = Calendar.getInstance();
     	cal.getTime();
     	SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy 'at' HH.mm.ss");
-		logger = new CSVLogging("D:\\" + filename + " " + sdf.format(cal.getTime()) + " U" + numberofusers + "_P" + numberofpakets + ".csv");
+		this.simID = sdf.format(cal.getTime()) + " U" + numberofusers + "_P" + numberofpakets;
+		logger = new CSVLogging(mapname + "_" + simID + ".csv");
+        graph = new ContactGraph();
 	}
 
 
@@ -100,7 +111,7 @@ public class MapSimulation {
 		for (int i = 0; i < numberofusers; i++) {
 			// create user with random starting location and random starting target
 			SimNode random = map.getRandomNode();
-			Coordinate start = new Coordinate(random.getPosition().getX(),random.getPosition().getY());
+			Coordinate start = new Coordinate(random.getPosition().getLat(),random.getPosition().getLon());
 			ArrayList<SimNode> path = new ArrayList<SimNode>();
 			path = map.getPath(map.getNode(start), map.getRandomNode());
 			if (path == null || path.size() == 0) {
@@ -114,8 +125,8 @@ public class MapSimulation {
 			// create paket with random starting location and random destinatio
 			SimNode random = map.getRandomNode();
 			SimNode random2 = map.getRandomNode();
-			Paket p = new Paket(new Coordinate(random.getPosition().getX(),random.getPosition().getY()),
-					new Coordinate(random2.getPosition().getX(),random2.getPosition().getY()),(i+1));
+			Paket p = new Paket(new Coordinate(random.getPosition().getLat(),random.getPosition().getLon()),
+					new Coordinate(random2.getPosition().getLat(),random2.getPosition().getLon()),(i+1));
 			pakets.add(p);
 		}
 
@@ -132,27 +143,27 @@ public class MapSimulation {
 
 		for (int i = 0; i < numberofusers; i++) {
 			// create user with starting location on a random cluster weighed by the importance of the cluster
-			SimNode randomclusternode = getRandomClusterNode();
-			Coordinate start = new Coordinate(randomclusternode.getPosition().getX(),randomclusternode.getPosition().getY());
+			SimNode clusternode = getRandomClusterNode();
+			Coordinate start = new Coordinate(clusternode.getPosition().getLat(),clusternode.getPosition().getLon());
 			ArrayList<SimNode> path = new ArrayList<SimNode>();
 			path = map.getPath(map.getNode(start), getRandomClusterNode());
 			while (path == null || path.size() == 0) {
 				path = map.getPath(map.getNode(start), getRandomClusterNode());
 			}
 			User u = new User(start, path,(i+1));
-			u.addKnownclusters(randomclusternode);
+			u.addKnownclusters(clusternode);
 			u.addKnownclusters(u.getPath().get(u.getPath().size() - 1));
 			users.add(u);
 		}
 		for (int i = 0; i < numberofpackets; i++) {
 			// create pakets with starting location and destination on a random cluster weighed by the importance of the cluster
-			SimNode random = getRandomClusterNode();
-			SimNode random2 = getRandomClusterNode();
-			while (random2 == random) {
-				random2 = getRandomClusterNode();
+			SimNode node = getRandomClusterNode();
+			SimNode node2 = getRandomClusterNode();
+			while (node2 == node) {
+				node2 = getRandomClusterNode();
 			}
-			Paket p = new Paket(new Coordinate(random.getPosition().getX(),random.getPosition().getY()),
-					new Coordinate(random2.getPosition().getX(),random2.getPosition().getY()),(i+1));
+			Paket p = new Paket(new Coordinate(node.getPosition().getLat(),node.getPosition().getLon()),
+					new Coordinate(node2.getPosition().getLat(),node2.getPosition().getLon()),(i+1));
 			pakets.add(p);
 		}
 	}
@@ -218,13 +229,13 @@ public class MapSimulation {
 
 
 	/**
-	 * main method, simulates one cycle
+	 * Main method, simulates one cycle
 	 * before users are moved 3 checks are made. 
 	 * For Pakets without a Carrier in range of the user,
 	 * For Pakets with a destination in range of the user and
 	 * For Users in range to make a negotiation
 	 */
-	public void simulate() {
+	public void simulation_step() {
 		checkForCarrierlessPakets();
 		checkForDeliverablePakets();
 		checkForNegotiations();
@@ -249,7 +260,7 @@ public class MapSimulation {
 	/**
 	 * checks if there are pakets without carriers to pick up in range of any user
 	 */
-	public void checkForCarrierlessPakets() {
+	private void checkForCarrierlessPakets() {
 		// looking for pakets without carriers in range of the users
 		for (int i = 0; i < pakets.size(); i++) {
 			Paket p = pakets.get(i);
@@ -257,7 +268,7 @@ public class MapSimulation {
 				for (int i2 = 0; i2 < users.size(); i2++) {
 					User u = users.get(i2);
 					if (u.getPosition().getDistance(p.getPosition()) < bluetoothrange) {
-						if (u.getPosition().getX() == p.getPosition().getX() && u.getPosition().getY() == p.getPosition().getY() && p.getCarrier() == null) {
+						if (u.getPosition().getLat() == p.getPosition().getLat() && u.getPosition().getLon() == p.getPosition().getLon() && p.getCarrier() == null) {
 							// if you are at the pakets position, pick it up
 							u.addPaket(p);
 							p.setCarrier(u);
@@ -295,14 +306,14 @@ public class MapSimulation {
 	/**
 	 * checks if there are pakets that can be delivered in range of the user
 	 */
-	public void checkForDeliverablePakets() {
+	private void checkForDeliverablePakets() {
 		// checking if pakets can be delivered
 		for (int i = 0; i < users.size(); i++) {
 			User u = users.get(i);
 			for (int i2 = 0; i2 < u.getPakets().size(); i2++) {
 				Paket p = u.getPakets().get(i2);
 				if (u.getPosition().getDistance(p.getDestination()) < bluetoothrange) {
-					if (u.getPosition().getX() == p.getDestination().getX() && u.getPosition().getY() == p.getDestination().getY()) {
+					if (u.getPosition().getLat() == p.getDestination().getLat() && u.getPosition().getLon() == p.getDestination().getLon()) {
 						// if you are at the pakets destinations position, deliver it
 						u.removePaket(p);
 						p.setCarrier(null);
@@ -343,7 +354,7 @@ public class MapSimulation {
 	/**
 	 * checks through all Users for possible negotiations about pakets
 	 */
-    public void checkForNegotiations() {
+    private void checkForNegotiations() {
         // going through all users and for every user again through every other user to check all possible pairs
         for (int i = 0; i < users.size(); i++) {
             User u = users.get(i);
@@ -353,8 +364,7 @@ public class MapSimulation {
                     // check if both users aren't currently blocked from trading
                     if (u.getPosition().getDistance(u2.getPosition()) < bluetoothrange)
                     {
-                        //Todo:
-                        graph.addMutualUserContact(u,u2, getCycles()*getSteptime());
+						this.log_contact(u, u2);
                         if(u.getTradestopcounter() < 1 && u2.getTradestopcounter() < 1)
                             negotiate(u, u2);
                     }
@@ -363,7 +373,9 @@ public class MapSimulation {
         }
     }
 
-    private void negotiate(User u, User u2) {
+
+
+	private void negotiate(User u, User u2) {
         for (int i3 = 0; i3 < u.getPakets().size(); i3++)
         {
             Paket p = u.getPakets().get(i3);
@@ -375,7 +387,7 @@ public class MapSimulation {
                 u.removePaket(p);
                 u2.addPaket(p);
                 p.setCarrier(u2);
-                p.setPosition(new Coordinate(u2.getPosition().getX(), u2.getPosition().getY()));
+                p.setPosition(new Coordinate(u2.getPosition().getLat(), u2.getPosition().getLon()));
                 p.setHandovers(p.getHandovers() + 1);
 
                 // logging
@@ -396,13 +408,13 @@ public class MapSimulation {
 	 * @param u the user that needs to be moved
 	 * @param movedistance the amount of distance it needs to be moved
 	 */
-	public void moveUser(User u, double movedistance) {
+	private void moveUser(User u, double movedistance) {
 		double distance = u.getPosition().getDistance(u.getPath().get(0).getPosition());
 		// check if our target is nearer than the full movedistance
 		if (distance <= movedistance) {
 			// if we are in move distance for this cycle set our position to our target
-			u.getPosition().setX(u.getPath().get(0).getPosition().getX());
-			u.getPosition().setY(u.getPath().get(0).getPosition().getY());
+			u.getPosition().setLat(u.getPath().get(0).getPosition().getLat());
+			u.getPosition().setLon(u.getPath().get(0).getPosition().getLon());
 			
 			// if you are already at the nodes position, don't increase the counter for the times the node has been visited
 			if (distance != 0) {
@@ -418,7 +430,7 @@ public class MapSimulation {
 			}
 			for (int i = 0; i < u.getPakets().size(); i++) {
 				Paket p = u.getPakets().get(i);
-				p.setPosition(new Coordinate(u.getPosition().getX(), u.getPosition().getY()));
+				p.setPosition(new Coordinate(u.getPosition().getLat(), u.getPosition().getLon()));
 				p.setCoveredDistance(p.getCoveredDistance() + distance);
 			}
 			
@@ -490,12 +502,12 @@ public class MapSimulation {
 			}	
 		} else {
 			// move towards our target
-			double vectorx = u.getPath().get(0).getPosition().getX() - u.getPosition().getX();
-			double vectory = u.getPath().get(0).getPosition().getY() - u.getPosition().getY();
+			double vectorx = u.getPath().get(0).getPosition().getLat() - u.getPosition().getLat();
+			double vectory = u.getPath().get(0).getPosition().getLon() - u.getPosition().getLon();
 			double normalisedx = vectorx/distance;
 			double normalisedy = vectory/distance;
-			u.getPosition().setX(u.getPosition().getX() + (normalisedx * movedistance));
-			u.getPosition().setY(u.getPosition().getY() + (normalisedy * movedistance));
+			u.getPosition().setLat(u.getPosition().getLat() + (normalisedx * movedistance));
+			u.getPosition().setLon(u.getPosition().getLon() + (normalisedy * movedistance));
 			
 			// increase coveredDistance for our user and all their pakets
 			u.setCoveredDistance(u.getCoveredDistance() + movedistance);
@@ -504,12 +516,32 @@ public class MapSimulation {
 			}
 			for (int i = 0; i < u.getPakets().size(); i++) {
 				Paket p = u.getPakets().get(i);
-				p.setPosition(new Coordinate(u.getPosition().getX(), u.getPosition().getY()));
+				p.setPosition(new Coordinate(u.getPosition().getLat(), u.getPosition().getLon()));
 				p.setCoveredDistance(p.getCoveredDistance() + movedistance);
 			}
 		}
 	}
-	
+
+	/************************************************************************************************/
+
+	/** Log contact event.
+	 *
+	 * @param u
+	 * @param u2
+	 */
+	private void log_contact(User u, User u2) {
+		graph.addMutualUserContact(u, u2, cycles);
+	}
+
+
+
+	/**
+	 * Write the Resulting ContactGraph
+	 */
+	public void writeContactGraph() throws IOException {
+		String basename = mapname+"-contact-graph-" + simID;
+		graph.writeGraph(basename);
+	}
 	
 	/**
 	 * writes some closing statistics into our logging file
@@ -574,21 +606,28 @@ public class MapSimulation {
 		
         // add to CSV-logging
         ArrayList<String[]> finalStats = new ArrayList<String[]>();
+		int num_delivered = getDeliveredpakets().size();
 		finalStats.add(new String[] {""});
 		finalStats.add(new String[] {"Final Statistics:"});
 		finalStats.add(new String[] {"Delivered Pakets: ", String.valueOf(getDeliveredpakets().size())});
 		finalStats.add(new String[] {"Undelivered Pakets: ", String.valueOf(getUnDeliveredpakets().size())});
-		finalStats.add(new String[] {"Average Handovers: ", String.valueOf((averagehandovers / getDeliveredpakets().size()))});
-		finalStats.add(new String[] {"Average Delivery Time: ", String.valueOf((averagedeliverytime / getDeliveredpakets().size()))});
-		finalStats.add(new String[] {"Average Distance Covered: ", String.valueOf((averagedistancecovered / getDeliveredpakets().size()))});
+		finalStats.add(new String[] {"Average Handovers: ",
+				(num_delivered == 0) ? "INF" : String.valueOf(averagehandovers / num_delivered)});
+		finalStats.add(new String[] {"Average Delivery Time: ",
+				(num_delivered == 0) ? "INF" : String.valueOf(averagedeliverytime / num_delivered)});
+		finalStats.add(new String[]{"Average Distance Covered: ",
+				(num_delivered == 0) ? "INF" : String.valueOf(averagedistancecovered / num_delivered)});
 		logger.write(finalStats);
 		
 		// console-version
         System.out.println("Paket stats:");
         System.out.println("Undelivered Pakets: " + getUnDeliveredpakets().size());
-        System.out.println("Average Handovers: " + (averagehandovers / getDeliveredpakets().size()));
-        System.out.println("Average Delivery Time: " + (averagedeliverytime / getDeliveredpakets().size()));
-        System.out.println("Average delivered Paket Distance Covered: " + (averagedistancecovered / getDeliveredpakets().size()) + "m");
+        System.out.println("Average Handovers: " +
+				((num_delivered == 0) ? "INF" : (averagehandovers / getDeliveredpakets().size())));
+        System.out.println("Average Delivery Time: " +
+				((num_delivered == 0) ? "INF" : (averagedeliverytime / getDeliveredpakets().size())));
+        System.out.println("Average delivered Paket Distance Covered: " +
+		((num_delivered == 0) ? "INF" : (averagedistancecovered / getDeliveredpakets().size()) + "m"));
 	}
 
 	

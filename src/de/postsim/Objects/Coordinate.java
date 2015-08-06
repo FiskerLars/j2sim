@@ -9,19 +9,19 @@ public class Coordinate {
 	
 	private double lat;							// x value or latitude
 	private double lon;							// y value or longitude
-	private final double radius = 6378388;		// radius of the earth
-	
+
 	/**
 	 * Standard Constructor for a Coordinate. A point in 2-dimensional space with x (lat) and y-value (lon)
 	 * @param lat the x-value
 	 * @param lon the y-value
 	 */
 	public Coordinate(double lat, double lon){
-		setX(lat);
-		setY(lon);
+		setLat(lat);
+		setLon(lon);
 	}
 	
-	
+
+
 	/**
 	 * Gives you the direct distance between two lat/lon Coordinates in meter (not tested for negative values)
 	 * @param target
@@ -29,9 +29,10 @@ public class Coordinate {
 	 */
 	public double getDistance(Coordinate target) {
 		Double result;
-		result = radius * Math.acos(Math.sin(Math.toRadians(this.lat)) * Math.sin(Math.toRadians(target.getX()))
-						+ Math.cos(Math.toRadians(this.lat)) * Math.cos(Math.toRadians(target.getX()))
-						* Math.cos(Math.toRadians(this.lon) - Math.toRadians(target.getY())));
+		double radius = 6378388;
+		result = radius * Math.acos(Math.sin(Math.toRadians(this.lat)) * Math.sin(Math.toRadians(target.getLat()))
+						+ Math.cos(Math.toRadians(this.lat)) * Math.cos(Math.toRadians(target.getLat()))
+						* Math.cos(Math.toRadians(this.lon) - Math.toRadians(target.getLon())));
 		
 		// if numbers get sufficiently close to each other or the coordinates are actually the same the result is NAN, when it should be 0 (or very close to it) 
 		if (result.isNaN()) {
@@ -66,22 +67,6 @@ public class Coordinate {
 		this.lon = lon;
 	}
 
-    @Deprecated
-    public double getX() {
-        return lat;
-    }
-    @Deprecated
-    public void setX(double lat) {
-        this.lat = lat;
-    }
-    @Deprecated
-    public double getY() {
-        return lon;
-    }
-    @Deprecated
-    public void setY(double lon) {
-        this.lon = lon;
-    }
 
     /**
 	 * Project this coordinate onto the given coordinate (into its direction) using the scalar to determine the length. I.e. scalar=.5 means "half the way".
@@ -96,4 +81,6 @@ public class Coordinate {
 		a.lon = a.lon +  scalar*(b.lon -a.lon);
 
 	}
+
+
 }

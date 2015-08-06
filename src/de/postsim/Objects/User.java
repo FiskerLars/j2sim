@@ -36,10 +36,10 @@ public class User {
 	 * @return
 	 */
 	public double getAngle(Coordinate target) {
-		double vectorx = path.get(path.size()-1).getPosition().getX() - position.getX();
-		double vectory = path.get(path.size()-1).getPosition().getY() - position.getY();
-		double vectorx2 = target.getX() - position.getX();
-		double vectory2 = target.getY() - position.getY();
+		double vectorx = path.get(path.size()-1).getPosition().getLat() - position.getLat();
+		double vectory = path.get(path.size()-1).getPosition().getLon() - position.getLon();
+		double vectorx2 = target.getLat() - position.getLat();
+		double vectory2 = target.getLon() - position.getLon();
 		double angle = Math.acos(((vectorx*vectorx2)+(vectory*vectory2))/(position.getDistance(path.get(path.size()-1).getPosition()))*position.getDistance(target));
 		return angle;
 	}
@@ -54,7 +54,7 @@ public class User {
 		ArrayList<SimNode> clusters = new ArrayList<SimNode>();
 		for (int i = 0; i < knownclusters.size(); i++) {
 			SimNode n = knownclusters.get(i);
-			if (n.getPosition().getX() == getPosition().getX() && n.getPosition().getY() == getPosition().getY()) {
+			if (n.getPosition().getLat() == getPosition().getLat() && n.getPosition().getLon() == getPosition().getLon()) {
 				
 			}
 			else{
