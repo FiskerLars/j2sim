@@ -17,7 +17,7 @@ public class SimMap {
 	private double bottomBound;
 	private double rightBound;
 	private double leftBound;
-	private static Random rand = new Random(4); // static random seed for reproducability
+	private Random rgen = new Random(4); // static random seed for reproducability
 
 
 	/**
@@ -29,6 +29,7 @@ public class SimMap {
 	 * @param leftBound
 	 */
 	public SimMap(ArrayList<SimWay> ways, double topBound, double bottomBound, double rightBound, double leftBound) {
+		this.rgen = rgen;
 		// get all the nodes out of the ways
 		ArrayList<SimNode> tempnodes = new ArrayList<SimNode>();
 		for (int i = 0; i < ways.size(); i++) {
@@ -300,8 +301,8 @@ public class SimMap {
 	 * @param upperLimit
 	 * @return
 	 */
-	public static double RandomNumber(double lowerLimit, double upperLimit) {
-		return rand.nextDouble() * (upperLimit - lowerLimit) + lowerLimit;
+	public double RandomNumber(double lowerLimit, double upperLimit) {
+		return rgen.nextDouble() * (upperLimit - lowerLimit) + lowerLimit;
 		//Math.random() * (upperLimit - lowerLimit) + lowerLimit;
 	}
 	
@@ -383,5 +384,9 @@ public class SimMap {
 
 	public void setRandomnodes(ArrayList<SimNode> randomnodes) {
 		this.randomnodes = randomnodes;
+	}
+
+	public void setRandomGenerator(Random randomGenerator) {
+		this.rgen = randomGenerator;
 	}
 }

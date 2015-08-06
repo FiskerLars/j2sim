@@ -37,7 +37,7 @@ public class MapGUI extends JApplet {
 	 * constructs an applet to visualize the simulation on a map
 	 * @param map the map
 	 * @param sim the simulation
-	 * @param width	the initial width of the window
+	 * @param width    the initial width of the window
 	 * @param height the initial height of the window
 	 */
 	public MapGUI(SimMap map, MapSimulation sim, double width, double height) {

@@ -1,6 +1,7 @@
 package de.postsim.Objects;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 /**
  * user object, that represents Users in the simulation
@@ -17,7 +18,7 @@ public class User {
 	private int tradestopcounter = 0;									// counter to control stopping for a trade
 	private int waitcounter = 0;										// counter to control waiting at a smooth location
 	private ArrayList<SimNode> knownclusters = new ArrayList<SimNode>();// known clusters to the user in the Cluster algorithm
-	
+
 	/**
 	 * Standard Constructor for a User. Gives it an id, a starting position and a destination
 	 * @param startPosition
@@ -49,7 +50,7 @@ public class User {
 	 * 
 	 * @return
 	 */
-	public SimNode getRandomKnowncluster() {
+	public SimNode getRandomKnowncluster(Random rgen) {
 		double totalnodevalue = 0;
 		ArrayList<SimNode> clusters = new ArrayList<SimNode>();
 		for (int i = 0; i < knownclusters.size(); i++) {
@@ -66,7 +67,7 @@ public class User {
 			SimNode n = clusters.get(i);
 			totalnodevalue += n.getClustervalue();
 		}
-		int x = (int) SimMap.RandomNumber(0, totalnodevalue);
+		int x = (int) rgen.nextInt((int) totalnodevalue);// .RandomNumber(0, totalnodevalue);
 		
 		double counter = 0;
 		SimNode result = null;

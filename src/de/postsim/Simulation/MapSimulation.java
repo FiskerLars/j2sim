@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Random;
 import java.util.logging.Logger;
 
 import de.postsim.IO.CSVLogging;
@@ -22,6 +23,7 @@ import de.postsim.Objects.User;
 public class MapSimulation {
 
 	private final String simID;
+	private final Random rgen;
 	private SimMap map;
 	private ArrayList<User> users = new ArrayList<User>();							// list of users
 	private ArrayList<Paket> pakets = new ArrayList<Paket>();						// list of non-delivered pakets
@@ -46,8 +48,8 @@ public class MapSimulation {
 	/**
 	 * empty constructor (except for a map) for testing purposes. Uses standard settings with 8 users and 25 pakets
 	 */
-	public MapSimulation(SimMap map, String csvfile) {
-		this(map, 8, 25, csvfile);
+	public MapSimulation(SimMap map, Random rgen, String csvfile) {
+		this(map, rgen, 8, 25, csvfile);
 	}
 
 	/**
@@ -55,14 +57,15 @@ public class MapSimulation {
 	 * @param numberofusers
 	 * @param numberofpakets
 	 */
-	public MapSimulation(SimMap map, int numberofusers, int numberofpakets, String csvfile) {
-		this(map, numberofusers, numberofpakets, 10, RANDOM_WAYPOINT, 10, csvfile);
+	public MapSimulation(SimMap map, Random rgen, int numberofusers, int numberofpakets, String csvfile) {
+		this(map, rgen, numberofusers, numberofpakets, 10, RANDOM_WAYPOINT, 10, csvfile);
 	}
 	
 	
 	/**
 	 * a constructor for customising simulation parameters
 	 * @param map
+	 * @param rgen
 	 * @param numberofusers
 	 * @param numberofpakets
 	 * @param bluetoothrange in m
@@ -70,10 +73,12 @@ public class MapSimulation {
 	 * @param tradeDelay tradeDelay for Users in SimulationCycles
 	 */
 	public MapSimulation(SimMap map,
+						 Random rgen,
 						 int numberofusers, int numberofpakets,
 						 int bluetoothrange, int movementalgorithm, int tradeDelay,
 						 String mapname) {
 	this.mapname = mapname;
+	this.rgen = rgen;
 
 		setMap(map);
 		switch(movementalgorithm) {
@@ -110,10 +115,11 @@ public class MapSimulation {
 	private void initRandomWaypointSim(int numberofusers, int numberofpackets) {
 		for (int i = 0; i < numberofusers; i++) {
 			// create user with random starting location and random starting target
-			SimNode random = map.getRandomNode();
-			Coordinate start = new Coordinate(random.getPosition().getLat(),random.getPosition().getLon());
+			SimNode startNode = map.getRandomNode();
+			Coordinate start = new Coordinate(startNode.getPosition().getLat(),startNode.getPosition().getLon());
 			ArrayList<SimNode> path = new ArrayList<SimNode>();
-			path = map.getPath(map.getNode(start), map.getRandomNode());
+			SimNode startTarget = map.getRandomNode();
+			path = map.getPath(map.getNode(start), startTarget);
 			if (path == null || path.size() == 0) {
 				path = new ArrayList<SimNode>();
 				path.add(map.getNode(start));
@@ -214,7 +220,7 @@ public class MapSimulation {
 			SimNode n = getClusternodes().get(i);
 			totalnodevalue += n.getClustervalue();
 		}
-		int x = (int) SimMap.RandomNumber(0, totalnodevalue);
+		int x = (int) map.RandomNumber(0, totalnodevalue);
 		
 		double counter = 0;
 		SimNode result = null;
@@ -446,7 +452,7 @@ public class MapSimulation {
 					u.setPath(path);
 				}
 				else if (movementalgorithm == CLUSTER_WAYPOINT){
-					double x = SimMap.RandomNumber(0, 2);
+					double x = map.RandomNumber(0, 2);
 					if (x > (u.getKnownClusterValue()/10)) {
 						ArrayList<SimNode> path = new ArrayList<SimNode>();
 						path = map.getPath(map.getNode(u.getPosition()), getRandomClusterNode());
@@ -457,40 +463,40 @@ public class MapSimulation {
 							u.addKnownclusters(path.get(path.size() - 1));
 						}
 						u.setPath(path);
-						double x2 = SimMap.RandomNumber(0, 1);
+						double x2 = map.RandomNumber(0, 1);
 						if (x2 < 0.65) {
-							int x3 = (int) SimMap.RandomNumber(300, 600);
+							int x3 = (int) map.RandomNumber(300, 600);
 							u.increaseWaitcounter(x3);
 						}
 						else if (x2 < 0.9) {
-							int x3 = (int) SimMap.RandomNumber(1800, 7200);
+							int x3 = (int) map.RandomNumber(1800, 7200);
 							u.increaseWaitcounter(x3);
 						}
 						else {
-							int x3 = (int) SimMap.RandomNumber(14400, 288800);
+							int x3 = (int) map.RandomNumber(14400, 288800);
 							u.increaseWaitcounter(x3);
 						}
 						
 					}
 					else {
 						ArrayList<SimNode> path = new ArrayList<SimNode>();
-						path = map.getPath(map.getNode(u.getPosition()), u.getRandomKnowncluster());
+						path = map.getPath(map.getNode(u.getPosition()), u.getRandomKnowncluster(rgen));
 						while (path == null || path.size() == 0) {
-							path = map.getPath(map.getNode(u.getPosition()), u.getRandomKnowncluster());
+							path = map.getPath(map.getNode(u.getPosition()), u.getRandomKnowncluster(rgen));
 						}
 						u.addKnownclusters(path.get(path.size() - 1));
 						u.setPath(path);
-						double x2 = SimMap.RandomNumber(0, 1);
+						double x2 = map.RandomNumber(0, 1);
 						if (x2 < 0.5) {
-							int x3 = (int) SimMap.RandomNumber(300, 600);
+							int x3 = (int) map.RandomNumber(300, 600);
 							u.increaseWaitcounter(x3);
 						}
 						else if (x2 < 0.8) {
-							int x3 = (int) SimMap.RandomNumber(1800, 7200);
+							int x3 = (int) map.RandomNumber(1800, 7200);
 							u.increaseWaitcounter(x3);
 						}
 						else {
-							int x3 = (int) SimMap.RandomNumber(14400, 288800);
+							int x3 = (int) map.RandomNumber(14400, 288800);
 							u.increaseWaitcounter(x3);
 						}
 					}
