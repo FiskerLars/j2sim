@@ -30,6 +30,7 @@ public class ContactGraph implements Serializable  {
     private static final Logger log = Logger.getLogger(ContactGraph.class.getName());
 
 
+    private CGAttributeProvider attributes = new CGAttributeProvider();
     private HashMap<User, Stack<ContactEvent>> contactEvents = new HashMap<User,Stack<ContactEvent>>();
     private List<MovementEvent> movement = new ArrayList<MovementEvent>();
 
@@ -62,7 +63,7 @@ public class ContactGraph implements Serializable  {
     private void writeDOT(FileWriter file)
             throws IOException
     {
-        DOTExporter<CGVertex,CGEdge> exporter = new DOTExporter<>();
+        DOTExporter<CGVertex,CGEdge> exporter = new DOTExporter<>(attributes, attributes, attributes, attributes, attributes);
         exporter.export(file, graph);
     }
 
@@ -85,7 +86,7 @@ public class ContactGraph implements Serializable  {
     private ContactEvent newContact(List<User> users, Coordinate coord,
                             long startTime, long endTime) {
         ContactEvent contact = new ContactEvent(users, coord, startTime, endTime);
-        addNewContacts(users, contact);
+        addNewContactsToList(contact);
         graph.addVertex(contact);
         return contact;
     }
@@ -130,7 +131,7 @@ public class ContactGraph implements Serializable  {
             ContactEvent contact = newContact(users, coord, time, time + 1);
 
             graph.addVertex(contact);
-            addNewContacts(users, contact);
+            addNewContactsToList(contact);
             // Todo: make ordered contact event list
 
             if (null != prev_u) {
@@ -149,9 +150,12 @@ public class ContactGraph implements Serializable  {
         */
     }
 
-
-    private void addNewContacts(List<User> users, ContactEvent contact) {
-        Iterator<User> it = users.iterator();
+    /** Insert contact event into list of all participating users.
+     *
+     * @param contact
+     */
+    private void addNewContactsToList(ContactEvent contact) {
+        Iterator<User> it = contact.getUsers().iterator();
         while(it.hasNext()) {
             User u = it.next();
             if(contactEvents.containsKey(u))

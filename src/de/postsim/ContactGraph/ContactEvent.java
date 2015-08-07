@@ -1,10 +1,11 @@
 package de.postsim.ContactGraph;
 
+import com.sun.deploy.util.StringUtils;
 import de.postsim.Objects.Coordinate;
 import de.postsim.Objects.User;
+import org.jgrapht.ext.ComponentAttributeProvider;
 
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by lars on 29/07/15.
@@ -20,6 +21,7 @@ public class ContactEvent extends CGVertex {
 
     public ContactEvent(List<User> users, Coordinate coord,
                         long startTime, long endTime) {
+        super();
         this.users = users;
         this.coord = coord;
         this.startTime = startTime;
@@ -62,5 +64,17 @@ public class ContactEvent extends CGVertex {
         return users;
     }
 
+
+    public Map<String, String> getComponentAttributes() {
+        Map<String,String> attrs = new HashMap<String, String>();
+        attrs.put("start", Long.toString(this.getStartTime()));
+        attrs.put("end", Long.toString(this.getEndTime()));
+        attrs.put("pos", this.getCoord().toString());
+        Collection<String> userIDs = new ArrayList<>();
+        for (User user: this.getUsers())
+            userIDs.add(Integer.toString(user.getUsernumber()));
+        attrs.put("users", StringUtils.join(userIDs, ","));
+        return attrs;
+    }
 
 }

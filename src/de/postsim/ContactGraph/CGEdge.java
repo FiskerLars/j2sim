@@ -3,4 +3,8 @@ package de.postsim.ContactGraph;
 /** Edges in a contact graph extend this
  *
  */
- public class CGEdge {}
+ public class CGEdge extends CGElement {
+ public CGEdge(){
+  super();
+ }
+}

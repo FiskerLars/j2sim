@@ -17,7 +17,7 @@ public class SimMap {
 	private double bottomBound;
 	private double rightBound;
 	private double leftBound;
-	private Random rgen = new Random(4); // static random seed for reproducability
+	private Random rgen; // static random seed for reproducability
 
 
 	/**
@@ -28,7 +28,7 @@ public class SimMap {
 	 * @param rightBound
 	 * @param leftBound
 	 */
-	public SimMap(ArrayList<SimWay> ways, double topBound, double bottomBound, double rightBound, double leftBound) {
+	public SimMap(Random rgen, ArrayList<SimWay> ways, double topBound, double bottomBound, double rightBound, double leftBound) {
 		this.rgen = rgen;
 		// get all the nodes out of the ways
 		ArrayList<SimNode> tempnodes = new ArrayList<SimNode>();

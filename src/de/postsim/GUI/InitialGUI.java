@@ -26,7 +26,7 @@ public class InitialGUI
 
     public static void main(String[] args)
     {
-        MapGUI applet;
+        MapGUI applet = null;
         Random rgen = new Random(4); // Four is a perfectly random number.
 
         File mapfile = chooseMapfile();
@@ -38,8 +38,8 @@ public class InitialGUI
 
         // parsing the .osm file and building our own map with it
         OSMXMLParser parser = new OSMXMLParser(mapfile);
-        SimMap map = parser.parse();
-        map.setRandomGenerator(rgen);
+        SimMap map = parser.parseNewMap(rgen);
+
 
         // constructing a simulation with our chosen parameters
         MapSimulation sim = new MapSimulation(map, rgen, 100, 250, 10,
@@ -85,7 +85,7 @@ public class InitialGUI
             e.printStackTrace();
         }
         // display a heatmap in the applet
-        if(withGUI) {
+        if(withGUI && null != applet) {
             applet.setHeatmap(true);
             applet.repaint();
         }

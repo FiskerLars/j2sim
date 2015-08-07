@@ -3,6 +3,8 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Random;
+
 
 import org.openstreetmap.osmosis.core.container.v0_6.EntityContainer;
 import org.openstreetmap.osmosis.core.domain.v0_6.Bound;
@@ -93,7 +95,7 @@ public class OSMXMLParser {
 	 * this method is used to parse an .osm file with osmosis and create a custom SimMap object out of it
 	 * @return a SimMap that was parsed out of the given file
 	 */
-	public SimMap parse() {
+	public SimMap parseNewMap(Random rgen) {
 		CompressionMethod compression = CompressionMethod.None;
 
 		if (file.getName().endsWith(".gz")) {
@@ -117,7 +119,7 @@ public class OSMXMLParser {
 		    }
 		}
 		// create SimMap and return it
-		SimMap map = new SimMap(ways, topBound, bottomBound, rightBound, leftBound);
+		SimMap map = new SimMap(rgen, ways, topBound, bottomBound, rightBound, leftBound);
 		System.out.println("Map extracted");
 		System.out.println("Dimensions:");
 		System.out.println("Heigth: " + new Coordinate(topBound,rightBound).getDistance(new Coordinate(bottomBound,rightBound)) + "m");
