@@ -23,7 +23,7 @@ import de.postsim.Objects.User;
 public class MapSimulation {
 
 	private final String simID;
-	private final Random rgen;
+	private Random rgen;
 	private SimMap map;
 	private ArrayList<User> users = new ArrayList<User>();							// list of users
 	private ArrayList<Paket> pakets = new ArrayList<Paket>();						// list of non-delivered pakets
@@ -215,6 +215,7 @@ public class MapSimulation {
 	 * @return
 	 */
 	private SimNode getRandomClusterNode() {
+
 		double totalnodevalue = 0;
 		for (int i = 0; i < getClusternodes().size(); i++) {
 			SimNode n = getClusternodes().get(i);
@@ -717,5 +718,16 @@ public class MapSimulation {
 	
 	public void addClusternode(SimNode n) {
 		clusternodes.add(n);
+	}
+
+	/** Output all current positions packets and carriers to logger.
+	 *
+	 */
+	public void logPositions() {
+		for (User user:users) {
+		ArrayList<String[]> userlog = new ArrayList<>();
+			userlog.add(new String[] {String.valueOf(cycles), "User "+user.getUsernumber(), "", "coord:"+user.getPosition().toString(), ""});
+			logger.write(userlog);
+		}
 	}
 }

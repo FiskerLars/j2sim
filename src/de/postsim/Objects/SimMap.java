@@ -38,14 +38,17 @@ public class SimMap {
 		}
 		
 		// eliminate duplicate nodes in our list by putting them into a hashset (no duplicates allowed in this type of collection)
-		HashSet<SimNode> hs = new HashSet<SimNode>();		
+        tempnodes = removeDupNodes(tempnodes);
+/*
+        HashSet<SimNode> hs = new HashSet<SimNode>();
 		hs.addAll(tempnodes);
 		// clear our old list and add our nodes without duplicates from the Hashset
 		tempnodes.clear();
 		tempnodes.addAll(hs);
-		this.setNodes(tempnodes);
-		
-		// iterate through all ways to add their neighbours to every node 
+*/
+        this.setNodes(tempnodes);
+
+		// iterate through all ways to add their neighbours to every node
 		for (int i = 0; i < ways.size(); i++) {
 			SimWay w = ways.get(i);
 			ArrayList<SimNode> waynodes = new ArrayList<SimNode>();
@@ -77,9 +80,17 @@ public class SimMap {
 		// builds our list from which we extract random nodes as targets and positions for users and pakets
 		buildRandomNodesGraph();
 	}
-	
-	
-	/**
+
+    private static ArrayList<SimNode> removeDupNodes(ArrayList<SimNode> tempnodes) {
+        ArrayList<SimNode> result = new ArrayList<SimNode>();
+        for(SimNode node:tempnodes)
+            if((!result.contains(node)) || result.isEmpty())
+                result.add(node);
+        return result;
+   }
+
+
+    /**
 	 * this function creates a list of nodes. This list contains the biggest possible subgraph in our map within its bounds.
 	 * we set this list as "randomnodes" so Users and Pakets don't spawn or get targets out of bounds or in little places on the map 
 	 * that have no connection to the rest of the map
@@ -98,7 +109,7 @@ public class SimMap {
 		}
 		
 		// graphlist is a list of all the subgraphs we build
-		ArrayList<HashSet<SimNode>> graphlist = new ArrayList<HashSet<SimNode>>();
+		ArrayList<ArrayList<SimNode>> graphlist = new ArrayList<ArrayList<SimNode>>();
 		int biggestgraph = 0;
 		/* all nodes that are added to one of our subgraphs are deleted from our tempnodes list (all nodes excluding out of bounds)
 		 * so if our biggest subgraph is bigger than the tempnodes list with the remaining nodes, we can't find a bigger graph and 
@@ -107,9 +118,9 @@ public class SimMap {
 		while (tempnodes.size() > biggestgraph) {
 			SimNode start = tempnodes.get(0);
 			ArrayList<SimNode> tempnodes2 = new ArrayList<SimNode>();
-			HashSet<SimNode> subgraph = new HashSet<SimNode>();
+			ArrayList<SimNode> subgraph = new ArrayList<SimNode>();
 			subgraph.add(start);
-			tempnodes2.addAll(tempnodes);
+			tempnodes2.addAll(tempnodes); //FIXME: remove node "start" from list?
 			// iterate through all nodes from a random starting point and add every node on every path we find
 			// if our iteration is finished we know every node reachable from our random starting point
 			// usually we won't need more than one to three iterations, which is faster than using Dijkstra
@@ -117,18 +128,15 @@ public class SimMap {
 				int x = (int) RandomNumber(0, tempnodes2.size());
 				ArrayList<SimNode> path = new ArrayList<SimNode>();
 				path = getPath(start, tempnodes2.get(x));
+				tempnodes2.remove(x); // FIXME: potential racing condition?
 				if (path != null) {
 					subgraph.addAll(path);
-					tempnodes2.remove(x);
 					tempnodes2.removeAll(path);
-				}
-				else {
-					tempnodes2.remove(x);
 				}
 			}
 			graphlist.add(subgraph);
 			for (int i = 0; i < graphlist.size(); i++) {
-				HashSet<SimNode> g = new HashSet<SimNode>();
+				ArrayList<SimNode> g = new ArrayList<SimNode>();
 				g = graphlist.get(i);
 				if (g.size() > biggestgraph) {
 					biggestgraph = g.size();
@@ -137,9 +145,9 @@ public class SimMap {
 			tempnodes.removeAll(subgraph);
 		}
 		
-		HashSet<SimNode> result = new HashSet<SimNode>();
+		ArrayList<SimNode> result = new ArrayList<SimNode>();
 		for (int i = 0; i < graphlist.size(); i++) {
-			HashSet<SimNode> subgraph = new HashSet<SimNode>();
+			ArrayList<SimNode> subgraph = new ArrayList<SimNode>();
 			subgraph = graphlist.get(i);
 			if (subgraph.size() > result.size()) {
 				result.clear();

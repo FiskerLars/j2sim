@@ -108,7 +108,8 @@ public class OSMXMLParser {
 		reader = new XmlReader(file, false, compression);
 		reader.setSink(sinkImplementation);
 
-		Thread readerThread = new Thread(reader);
+		reader.run();
+	/*	Thread readerThread = new Thread(reader);
 		readerThread.start();
 
 		while (readerThread.isAlive()) {
@@ -118,6 +119,7 @@ public class OSMXMLParser {
 		        // do nothing
 		    }
 		}
+*/
 		// create SimMap and return it
 		SimMap map = new SimMap(rgen, ways, topBound, bottomBound, rightBound, leftBound);
 		System.out.println("Map extracted");
