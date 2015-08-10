@@ -45,6 +45,8 @@ public class InitialGUI
         MapSimulation sim = new MapSimulation(map, rgen, 100, 250, 10,
                 MapSimulation.CLUSTER_WAYPOINT, 10, mapname);
 
+        sim.logPositions();
+
         if(withGUI) {
             // building our MapGUI Applet
             JFrame f = new JFrame("Map");
